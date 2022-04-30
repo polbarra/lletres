@@ -1,13 +1,10 @@
 let canvas;
-let d;
-let g;
-let color = 255;
 let lastPressTimestamp;
 let shortClickThreshold = 500;
-let x = 0;
-let y = 0;
+
 let grid;
-let piece;
+let pieces = [];
+let selectedPiece;
 
 class Grid{
     constructor(gridSize, resolution, offset) {
@@ -53,7 +50,6 @@ class Grid{
 
     }
 }
-
 class Piece{
     constructor(letters, shape, rotation, position, size) {
         this.position = position;
@@ -89,14 +85,21 @@ class Piece{
         }
     }
 }
+class HandSlot{
+    constructor(piece, position) {
+        this.piece = piece;
+        this.position= position;
+        this.empty = false;
+    }
+}
 
 function setup(){
-    canvas = createCanvas(500, 650);
+    canvas = createCanvas(500, 700);
     canvas.position(0,0,'fixed');
     grid = new Grid(400, 10, 50);
-    let piecePosition = createVector(50, 500);
+    let piecePosition = createVector(90, 500);
     let shape = [1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 , 0, 0];
-    piece = new Piece("WASD", shape, 0, piecePosition, 30)
+    pieces.push(new Piece("WASD", shape, 0, piecePosition, 30));
 }
 
 function draw() {
@@ -108,27 +111,32 @@ function draw() {
             //Handle Short Press Input
         }
         else{
-            piece.inHand = false;
-            piece.position = createVector(mouseX - piece.size/2, mouseY - piece.size/2);
+            selectedPiece = pieces[0];
+            selectedPiece.inHand = false;
+            selectedPiece.position = createVector(mouseX - selectedPiece.size/2, mouseY - selectedPiece.size/2);
         }
     }
     grid.Render();
-    piece.Update();
-    piece.Render();
+    fill(200);
+    square(75, 485, 150, 40);
+    square(275, 485, 150, 40);
+
+    for(let i = 0; i < pieces.length; i++){
+        pieces[i].Update();
+        pieces[i].Render();
+    }
 }
 
 function mousePressed() {
-    x = mouseX;
-    y = mouseY;
     lastPressTimestamp = millis();
 }
 
 function mouseReleased() {
     lastPressTimestamp = 0;
-    piece.inHand = true;
-    //piece.position = createVector(50, 500);
-    const is_valid_placement = grid.CheckValidPosition(piece);
+    selectedPiece.inHand = true;
+    selectedPiece.position = createVector(100, 500);
+    const is_valid_placement = grid.CheckValidPosition(selectedPiece);
     if (is_valid_placement) {
-        
+
     }
 }
