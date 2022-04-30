@@ -180,11 +180,21 @@ function mouseReleased() {
     lastPressTimestamp = 0;
     if (selectedPiece) {
         const is_valid_placement = myGrid.CheckValidPosition(selectedPiece);
+
         if (is_valid_placement) {
             myGrid.placePiece(selectedPiece);
         }
+
         selectedPiece.position = selectedPiece.orig;
         selectedPiece.inHand = false;
         selectedPiece = null;
+    } else {
+        if (
+            mouseX - pieces[i].position.x < pieces[i].size*4 &&
+            mouseY - pieces[i].position.y < pieces[i].size*4 &&
+            mouseX > pieces[i].position.x &&
+            mouseY > pieces[i].position.y){
+            pieces[i].rotate();
+        }
     }
 }
