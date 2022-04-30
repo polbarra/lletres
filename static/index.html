@@ -18,7 +18,7 @@
 </body>
 
 <script>
-const socket = new WebSocket('ws://localhost:8765');
+const socket = new WebSocket('ws://138.68.141.162:8765');
 let availablePlayers = 0;
 let game = {};
 
@@ -50,13 +50,15 @@ socket.addEventListener('message', function (event) {
     if ('msg' in data) {
         if (data['msg'] == 'ping') {
             document.getElementById('msg').innerHTML = 'my turn';
+            document.getElementById('start').disabled = false;
         }
     }
 });
 
 function start() {
     socket.send(JSON.stringify({'move': 'ok'}));
-    document.getElementById('msg').innerHTML = 'my turn';
+    document.getElementById('msg').innerHTML = '';
+    document.getElementById('start').enabled = false;
 }
 
 </script>

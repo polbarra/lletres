@@ -38,6 +38,8 @@ games = {
 }
 """
 
+games = {}
+
 def get_available_players():
     is_waiting = lambda x: users[x] is None
     return list(filter(is_waiting, users))
@@ -88,6 +90,7 @@ async def start_game(uid, game_id):
     if len(current_game["users"]) < 2:
         current_game['active_player'] = uid
         current_game['player_event'] = asyncio.Event()
+        await user_socket[uid].send(json.dumps({'state': 'wait'}))
         await current_game['player_event'].wait()
     else:
         current_game['player_event'].set()
@@ -156,7 +159,7 @@ async def wait_game(websocket):
 
 
 async def main():
-    async with websockets.serve(wait_game, "localhost", 8765):
+    async with websockets.serve(wait_game, "0.0.0.0", 8765):
         await asyncio.Future()  # run forever
 
 if __name__ == "__main__":
