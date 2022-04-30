@@ -100,6 +100,20 @@ def check_winner(game_id):
         if 'AAA' in col:
             return True
             
+    # check diagonals
+    diags = [[(x,y) for x in range(W) for y in range(W) if x - y == c] for c in range(-(W-1), W)]
+    diags2 = [[(x,y) for x in range(W) for y in range(W) if x + y == W-c] for c in range(-(W-2), W+1)]
+    for diag in diags:
+        diag = ''.join([grid[x[0]*W+x[1]] for x in diag])
+        print(diag)
+        if 'AAA' in diag:
+            return True
+    for diag in diags2:
+        diag = ''.join([grid[x[0]*W+x[1]] for x in diag])
+        print(diag)
+        if 'AAA' in diag:
+            return True
+    
     return False
 
 async def end_game(game_id, winner_id):
