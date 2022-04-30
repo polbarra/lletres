@@ -12,9 +12,11 @@
 </head>
 
 <body>
-    <h1 id="gametitle"></h1>
-    <p id="msg"></p>
-    <input id="start" type="button" value="Connecting.." onclick="start()">
+    <div style="position: absolute; right: 10px;">
+        <h1 id="gametitle"></h1>
+        <p id="msg"></p>
+        <input  id="start" type="button" value="Connecting.." onclick="start()">
+    </div>
 </body>
 
 <script>
@@ -23,6 +25,7 @@ let availablePlayers = 0;
 let game = {};
 
 let startbtn = document.getElementById("start");
+
 socket.addEventListener('open', function (event) {
     startbtn.value = "Waiting Players..";
 });
@@ -51,17 +54,22 @@ socket.addEventListener('message', function (event) {
 
     if ('msg' in data) {
         if (data['msg'] == 'ping') {
-            document.getElementById('msg').innerHTML = 'my turn';
-            document.getElementById('start').disabled = false;
+            myGrid.grid = data['grid']
+            make_move = true;
         }
         
         if (data['msg'] == 'wait') {
             document.getElementById('msg').innerHTML = 'Waiting for other player';
             document.getElementById('start').disabled = true;
             game.is_run = true;
+            make_move = false;
         }
     }
 });
+
+function send_data_to_player(data) {
+    socket.send(JSON.stringify(data));
+}
 
 function start() {
     socket.send(JSON.stringify({'move': 'ok'}));

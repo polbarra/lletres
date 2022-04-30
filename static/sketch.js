@@ -5,6 +5,7 @@ let shortClickThreshold = 500;
 let myGrid;
 let pieces = [];
 let selectedPiece;
+let make_move = false;
 
 class Grid{
     constructor(gridSize, resolution, offset) {
@@ -51,8 +52,7 @@ class Grid{
             let x_grid = i % 4;
             let y_grid = Math.floor(i / 4);
 
-            // check doesn't collide
-            if (this.grid[idx+x_grid+y_grid*4] != 0 && piece.shape[i] != 0)
+            if (this.grid[idx+x_grid+y_grid*this.resolution] != 0 && piece.shape[i] != 0)
                 return false;
         }
 
@@ -68,8 +68,12 @@ class Grid{
                 this.grid[idx+x_grid+y_grid*this.resolution] = piece.letters[piece.shape[i]-1];
             }
         }
+
+        send_data_to_player({"grid": this.grid});
+        make_move = false;
     }
 }
+
 class Piece{
     constructor(letters, shape, rotation, position, size) {
         this.position = position;
@@ -77,14 +81,14 @@ class Piece{
         this.letters = letters;
         this.shape = shape;
         this.rotation = rotation;
-        this.inHand = true;
+        this.inHand = false;
+        this.orig = position;
     }
     Update(){
-        if(this.inHand){
-            this.size = 30;
-        }
-        else{
+        if (this.inHand) {
             this.size = 40;
+        } else {
+            this.size = 30;
         }
     }
     Render(){
@@ -113,29 +117,32 @@ class HandSlot{
     }
 }
 
+const piece_shapes = {
+    bar:      [1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    l:        [1, 0, 0, 0, 2, 0, 0, 0, 3, 4, 0, 0, 0, 0, 0, 0],
+    square:   [1, 2, 0, 0, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    s:        [0, 0, 1, 0, 0, 2, 3, 0, 0, 4, 0, 0, 0, 0, 0, 0],
+}
+
+const pieces_positions = {
+    left: {x: 90, y: 500},
+    right: {x: 300, y: 500},
+}
+
 function setup(){
     canvas = createCanvas(500, 700);
     canvas.position(0,0,'fixed');
     myGrid = new Grid(400, 10, 50);
-    let piecePosition = createVector(90, 500);
-    let shape = [1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 , 0, 0];
-    pieces.push(new Piece("WASD", shape, 0, piecePosition, 30));
+    pieces = [
+        new Piece("WASD", piece_shapes.bar, 0, pieces_positions.left, 30),
+        new Piece("WASD", piece_shapes.square, 0, pieces_positions.right, 30),
+    ]
 }
 
 function draw() {
     background(150);
     fill(0);
 
-    if(mouseIsPressed){
-        if(millis() - lastPressTimestamp < shortClickThreshold) {
-            //Handle Short Press Input
-        }
-        else{
-            selectedPiece = pieces[0];
-            selectedPiece.inHand = false;
-            selectedPiece.position = createVector(mouseX - selectedPiece.size/2, mouseY - selectedPiece.size/2);
-        }
-    }
     myGrid.Render();
     fill(200);
     square(75, 485, 150, 40);
@@ -151,13 +158,33 @@ function mousePressed() {
     lastPressTimestamp = millis();
 }
 
+function mouseDragged() {
+    if (selectedPiece) {
+        selectedPiece.position = createVector(mouseX - selectedPiece.size/2, mouseY - selectedPiece.size/2);
+    } else if (millis() - lastPressTimestamp < shortClickThreshold) {
+        for (let i = 0; i < pieces.length; i++) {
+            if (
+                mouseX - pieces[i].position.x < pieces[i].size*4 &&
+                mouseY - pieces[i].position.y < pieces[i].size*4 &&
+                mouseX > pieces[i].position.x &&
+                mouseY > pieces[i].position.y && make_move){
+                selectedPiece = pieces[i];
+                selectedPiece.inHand = true;
+            }
+        }
+    }
+
+}
+
 function mouseReleased() {
     lastPressTimestamp = 0;
-    selectedPiece.inHand = true;
-    selectedPiece.position = createVector(90, 500);
-    const is_valid_placement = myGrid.CheckValidPosition(selectedPiece);
-    if (is_valid_placement) {
-
-        myGrid.placePiece(selectedPiece);
+    if (selectedPiece) {
+        const is_valid_placement = myGrid.CheckValidPosition(selectedPiece);
+        if (is_valid_placement) {
+            myGrid.placePiece(selectedPiece);
+        }
+        selectedPiece.position = selectedPiece.orig;
+        selectedPiece.inHand = false;
+        selectedPiece = null;
     }
 }

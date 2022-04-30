@@ -60,7 +60,7 @@ def create_game():
     game_id = random.randint(0, 1000)
     games[game_id] = {
         "users": [],
-        "grid": [[None]*config["width"]]*config["height"],
+        "grid": [0]*config["width"]*config["height"],
         "active_player": None, 
         "last_movement": None,
         "winner": None,
@@ -113,10 +113,11 @@ async def start_game(uid, game_id):
             if current_game['winner'] is not None:
                 return
 
-        await user_socket[uid].send(json.dumps({'msg': 'ping'}))
+        await user_socket[uid].send(json.dumps({'msg': 'ping', 'grid': current_game["grid"]}))
 
         res = await user_socket[uid].recv()
         movement = json.loads(res)
+        current_game['grid'] = movement['grid']
         if current_game["step"] > 10:
             await end_game(game_id, uid)
             return
