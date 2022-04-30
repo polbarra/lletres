@@ -60,7 +60,7 @@ def create_game():
     game_id = random.randint(0, 1000)
     games[game_id] = {
         "users": [],
-        "grid": [0]*config["width"]*config["height"],
+        "grid": ['0']*config["width"]*config["height"],
         "active_player": None, 
         "last_movement": None,
         "winner": None,
@@ -80,6 +80,28 @@ def get_available_game():
 def is_valid_movement(game_id, movement):
     return True
 
+def check_winner(game_id):
+    grid = games[game_id]["grid"].copy()
+    W = config["width"]
+    H = config["height"]
+    
+    # check rows
+    for i in range(H):
+        row = ''.join(grid[i*W:i*W+W])
+        print(row)
+        if 'AAA' in row:
+            return True
+
+    # check columns
+    cols = [[grid[W*x+c] for x in range(H)] for c in range(W)]
+    for col in cols:
+        col = ''.join(col)
+        print(col)
+        if 'AAA' in col:
+            return True
+            
+    return False
+
 async def end_game(game_id, winner_id):
     print(f"game {game_id}: winner {winner_id}")
     loser_id = [x for x in games[game_id]["users"] if x != winner_id][0]
@@ -92,43 +114,43 @@ async def end_game(game_id, winner_id):
 async def start_game(uid, game_id):
     print(f"user {uid} started in {game_id}")
     users[uid] = game_id
-    current_game = games[game_id]
-    current_game["users"].append(uid)
+    games[game_id] = games[game_id]
+    games[game_id]["users"].append(uid)
 
-    if len(current_game["users"]) < 2:
-        current_game['active_player'] = uid
-        current_game['player_event'] = asyncio.Event()
+    if len(games[game_id]["users"]) < 2:
+        games[game_id]['active_player'] = uid
+        games[game_id]['player_event'] = asyncio.Event()
         await user_socket[uid].send(json.dumps({'msg': 'wait'}))
-        await current_game['player_event'].wait()
+        await games[game_id]['player_event'].wait()
     else:
-        current_game['player_event'].set()
-        current_game['player_event'].clear()
+        games[game_id]['player_event'].set()
+        games[game_id]['player_event'].clear()
     
     await user_socket[uid].send(json.dumps({'game_id': game_id}))
 
-    while current_game['winner'] is None:
-        current_game['step'] += 1
-        while current_game['active_player'] != uid:
-            await current_game['player_event'].wait()
-            if current_game['winner'] is not None:
+    while games[game_id]['winner'] is None:
+        games[game_id]['step'] += 1
+        while games[game_id]['active_player'] != uid:
+            await games[game_id]['player_event'].wait()
+            if games[game_id]['winner'] is not None:
                 return
 
-        await user_socket[uid].send(json.dumps({'msg': 'ping', 'grid': current_game["grid"]}))
+        await user_socket[uid].send(json.dumps({'msg': 'ping', 'grid': games[game_id]["grid"]}))
 
         res = await user_socket[uid].recv()
         movement = json.loads(res)
-        current_game['grid'] = movement['grid']
-        if current_game["step"] > 10:
+        games[game_id]['grid'] = movement['grid']
+        
+        if check_winner(game_id):
             await end_game(game_id, uid)
-            return
 
         if not is_valid_movement(game_id, movement):
-            await end_game(game_id, [x for x in current_game["users"] if x != uid][0])
+            await end_game(game_id, [x for x in games[game_id]["users"] if x != uid][0])
             return
 
-        current_game['active_player'] = [x for x in current_game["users"] if x != uid][0]
-        current_game['player_event'].set()
-        current_game['player_event'].clear()
+        games[game_id]['active_player'] = [x for x in games[game_id]["users"] if x != uid][0]
+        games[game_id]['player_event'].set()
+        games[game_id]['player_event'].clear()
 
 
 async def notify_available_users(uid):
