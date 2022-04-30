@@ -68,11 +68,17 @@ socket.addEventListener('message', function (event) {
             if (data['msg'] == 'winner') {
                 alert("win");
                 game.is_run = false;
+                make_move = false;
+                setup();
+                document.getElementById('start').disabled = false;
             }
 
             if (data['msg'] == 'loser') {
                 alert("lose");
                 game.is_run = false;
+                make_move = false;
+                setup();
+                document.getElementById('start').disabled = false;
             }
         }
     }
