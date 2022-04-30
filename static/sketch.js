@@ -1,6 +1,7 @@
 let canvas;
 let lastPressTimestamp;
 let shortClickThreshold = 500;
+
 let myGrid;
 let pieces = [];
 let selectedPiece;
@@ -136,14 +137,14 @@ function draw() {
         }
     }
     myGrid.Render();
-    for(let i = 0; i < pieces.length; i++){
-        pieces[i].Update();
-        pieces[i].Render();
-    }
     fill(200);
     square(75, 485, 150, 40);
     square(275, 485, 150, 40);
 
+    for(let i = 0; i < pieces.length; i++){
+        pieces[i].Update();
+        pieces[i].Render();
+    }
 }
 
 function mousePressed() {
@@ -154,9 +155,9 @@ function mouseReleased() {
     lastPressTimestamp = 0;
     selectedPiece.inHand = true;
     selectedPiece.position = createVector(100, 500);
-    const is_valid_placement = myGrid.CheckValidPosition(selectedPiece);
-    if (is_valid_placement) {
-
-        myGrid.placePiece(piece);
-    }
+    // const is_valid_placement = myGrid.CheckValidPosition(selectedPiece);
+    // if (is_valid_placement) {
+    //
+    //     //myGrid.placePiece(piece);
+    // }
 }
