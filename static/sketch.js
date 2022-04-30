@@ -108,6 +108,31 @@ class Piece{
             text(this.letters[i], this.position.x + segmentOffsetX + this.size/2, this.position.y + segmentOffsetY + this.size/2)
         }
     }
+    Rotate(){
+        let transposed = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+        for (let i = 0; i < 4; i++) {
+            for (let j = i; j < 4; j++) {
+                transposed[i][j] = this.shape[i*4 + j];
+            }
+        }
+        var n = 4 ;
+        for (var i=0; i<n/2; i++) {
+            for (var j=i; j<n-i-1; j++) {
+                var tmp=transposed[i][j];
+                transposed[i][j]=transposed[n-j-1][i];
+                transposed[n-j-1][i]=transposed[n-i-1][n-j-1];
+                transposed[n-i-1][n-j-1]=transposed[j][n-i-1];
+                transposed[j][n-i-1]=tmp;
+            }
+        }
+
+        for (let i = 0; i < 4; i++) {
+            for (let j = i; j < 4; j++) {
+                this.shape[i*4 + j] = transposed[i][j];
+            }
+        }
+
+    }
 }
 class HandSlot{
     constructor(piece, position) {
@@ -118,10 +143,22 @@ class HandSlot{
 }
 
 const piece_shapes = {
-    bar:      [1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    l:        [1, 0, 0, 0, 2, 0, 0, 0, 3, 4, 0, 0, 0, 0, 0, 0],
-    square:   [1, 2, 0, 0, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    s:        [0, 0, 1, 0, 0, 2, 3, 0, 0, 4, 0, 0, 0, 0, 0, 0],
+    bar1:      [1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    bar2:      [1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0],
+    bar3:      [4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    bar4:      [4, 0, 0, 0, 3, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0],
+    l1:        [1, 0, 0, 0, 2, 0, 0, 0, 3, 4, 0, 0, 0, 0, 0, 0],
+    l2:        [3, 2, 1, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    l3:        [4, 3, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+    l4:        [0, 0, 4, 0, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    square1:    [1, 2, 0, 0, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    square2:    [3, 1, 0, 0, 4, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    square3:    [4, 3, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    square4:    [2, 4, 0, 0, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    s1:        [0, 1, 0, 0, 3, 2, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0],
+    s2:        [1, 2, 0, 0, 0, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    s3:        [0, 4, 0, 0, 2, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+    s4:        [4, 3, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 }
 
 const pieces_positions = {
@@ -134,8 +171,8 @@ function setup(){
     canvas.position(0,0,'fixed');
     myGrid = new Grid(400, 10, 50);
     pieces = [
-        new Piece("WASD", piece_shapes.bar, 0, pieces_positions.left, 30),
-        new Piece("WASD", piece_shapes.square, 0, pieces_positions.right, 30),
+        new Piece("HACK", piece_shapes.square3, 0, pieces_positions.left, 30),
+        new Piece("HACK", piece_shapes.square4, 0, pieces_positions.right, 30),
     ]
 }
 
@@ -177,7 +214,6 @@ function mouseDragged() {
 }
 
 function mouseReleased() {
-    lastPressTimestamp = 0;
     if (selectedPiece) {
         const is_valid_placement = myGrid.CheckValidPosition(selectedPiece);
 
@@ -188,13 +224,16 @@ function mouseReleased() {
         selectedPiece.position = selectedPiece.orig;
         selectedPiece.inHand = false;
         selectedPiece = null;
-    } else {
-        if (
-            mouseX - pieces[i].position.x < pieces[i].size*4 &&
-            mouseY - pieces[i].position.y < pieces[i].size*4 &&
-            mouseX > pieces[i].position.x &&
-            mouseY > pieces[i].position.y){
-            pieces[i].rotate();
+    }else {
+        for (let i = 0; i < pieces.length; i++) {
+            if (
+                mouseX - pieces[i].position.x < pieces[i].size*4 &&
+                mouseY - pieces[i].position.y < pieces[i].size*4 &&
+                mouseX > pieces[i].position.x &&
+                mouseY > pieces[i].position.y && make_move){
+                pieces[i].Rotate();
+            }
         }
     }
+    lastPressTimestamp = 0;
 }
