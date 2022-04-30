@@ -1,0 +1,61 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Lletrat</title>
+<meta name="description" content="Lletres">
+</head>
+
+<body>
+    <h1 id="gametitle"></h1>
+    <p id="msg"></p>
+    <input id="start" type="button" value="Connecting.." onclick="start()">
+</body>
+
+<script>
+const socket = new WebSocket('ws://localhost:8765');
+let availablePlayers = 0;
+let game = {};
+
+let startbtn = document.getElementById("start");
+socket.addEventListener('open', function (event) {
+    startbtn.value = "Waiting Players..";
+});
+
+socket.addEventListener('error', function(event) {
+    startbtn.value = "Server is offline";
+});
+
+socket.addEventListener('message', function (event) {
+    data = JSON.parse(event.data);
+    console.log(data);
+
+    if ('available_players' in data) {
+        availablePlayers = data.available_players
+        if (availablePlayers > 0) {
+            startbtn.value = "Click to play!";
+        }
+    }
+
+    if ('game_id' in data) {
+        game.game_id = data['game_id'];
+        document.getElementById('gametitle').innerHTML = 'game_id '+game.game_id;
+    }
+
+    if ('msg' in data) {
+        if (data['msg'] == 'ping') {
+            document.getElementById('msg').innerHTML = 'my turn';
+        }
+    }
+});
+
+function start() {
+    socket.send(JSON.stringify({'move': 'ok'}));
+    document.getElementById('msg').innerHTML = 'my turn';
+}
+
+</script>
+</html>
