@@ -37,8 +37,10 @@ socket.addEventListener('message', function (event) {
 
     if ('available_players' in data) {
         availablePlayers = data.available_players
-        if (availablePlayers > 0) {
+        if (availablePlayers > 0 && !game.is_run) {
             startbtn.value = "Click to play!";
+        } else {
+            startbtn.value = "Waiting players..";
         }
     }
 
@@ -52,13 +54,21 @@ socket.addEventListener('message', function (event) {
             document.getElementById('msg').innerHTML = 'my turn';
             document.getElementById('start').disabled = false;
         }
+        
+        if (data['msg'] == 'wait') {
+            document.getElementById('msg').innerHTML = 'Waiting for other player';
+            document.getElementById('start').disabled = true;
+            game.is_run = true;
+        }
     }
 });
 
 function start() {
     socket.send(JSON.stringify({'move': 'ok'}));
     document.getElementById('msg').innerHTML = '';
-    document.getElementById('start').enabled = false;
+    if (!document.getElementById('msg').innerHTML == 'Waiting players..') {
+        document.getElementById('start').disabled = true;
+    }
 }
 
 </script>

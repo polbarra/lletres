@@ -41,7 +41,7 @@ games = {
 games = {}
 
 def get_available_players():
-    is_waiting = lambda x: users[x] is None
+    is_waiting = lambda x: users[x] is None or len(games[users[x]]["users"]) == 1
     return list(filter(is_waiting, users))
 
 async def wait_players():
@@ -90,7 +90,7 @@ async def start_game(uid, game_id):
     if len(current_game["users"]) < 2:
         current_game['active_player'] = uid
         current_game['player_event'] = asyncio.Event()
-        await user_socket[uid].send(json.dumps({'state': 'wait'}))
+        await user_socket[uid].send(json.dumps({'msg': 'wait'}))
         await current_game['player_event'].wait()
     else:
         current_game['player_event'].set()
@@ -137,16 +137,20 @@ async def wait_game(websocket):
         try:
             user_event.set()
             user_event.clear()
-            await notify_available_users(uid)
-            await wait_players()
-            await notify_available_users(uid)
-            await websocket.send("Click to play!")
-            res = await websocket.recv()
+            accepted = False
+            while not accepted or len(get_available_players()) < 2:
+                await notify_available_users(uid)
+                await wait_players()
+                await notify_available_users(uid)
+                await websocket.send("Click to play!")
+                res = await websocket.recv()
+                accepted = True
+
             game_id = get_available_game()
             await start_game(uid, game_id)
             print(f"end game {uid}")
             users[uid] = None
-        except websockets.exceptions.ConnectionClosedOK as e:
+        except (websockets.exceptions.ConnectionClosedOK, websockets.exceptions.ConnectionClosedError) as e:
             if users[uid] is not None:
                 await end_game(users[uid], [x for x in games[users[uid]]["users"] if x != uid][0])
                 
