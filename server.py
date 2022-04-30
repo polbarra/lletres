@@ -5,9 +5,17 @@ import websockets
 import random
 import json
 import time
+import click
+import http.server
+import threading
+import socketserver
+import pathlib
 from datetime import datetime
 
-SHAPE = (10, 10)
+config = {
+    "width": 0,
+    "height": 0,
+}
 
 users = {}
 user_socket = {}
@@ -52,7 +60,7 @@ def create_game():
     game_id = random.randint(0, 1000)
     games[game_id] = {
         "users": [],
-        "grid": [[None]*SHAPE[0]]*SHAPE[1],
+        "grid": [[None]*config["width"]]*config["height"],
         "active_player": None, 
         "last_movement": None,
         "winner": None,
@@ -161,10 +169,37 @@ async def wait_game(websocket):
             user_event.clear()
             return
 
+class webrequests(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        self.path = f"./static/{self.path}"
+        return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
-async def main():
-    async with websockets.serve(wait_game, "0.0.0.0", 8765):
+def static_server(httpport, webrequests):
+    webserver = socketserver.TCPServer(("", httpport), webrequests)
+    webserver.serve_forever()
+
+async def server(ip, gameport, httpport):
+    print(f"starting server on {ip}:{gameport}")
+    print(f"grid {config['width']}x{config['height']}")
+    print(f"http server listening on http://{ip}:{httpport}/")
+    staticserver = threading.Thread(target=static_server, name="http server", args=(httpport, webrequests))
+    staticserver.start()
+    print(f"-"*40)
+    async with websockets.serve(wait_game, ip, gameport):
         await asyncio.Future()  # run forever
 
+
+
+@click.command()
+@click.option('--width', default=10, help='Grid width')
+@click.option('--height', default=10, help='Grid height')
+@click.option('--ip', default='0.0.0.0', help='Server IP')
+@click.option('--gameport', default=8765, help='Game websocket port')
+@click.option('--webport', default=8000, help='Game http port')
+def main(width, height, ip, gameport, webport):
+    config["width"] = width
+    config["height"] = height
+    asyncio.run(server(ip, gameport, webport))
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
