@@ -38,6 +38,8 @@ games = {
 }
 """
 
+games = {}
+
 def get_available_players():
     is_waiting = lambda x: users[x] is None
     return list(filter(is_waiting, users))

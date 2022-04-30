@@ -54,7 +54,7 @@ socket.addEventListener('message', function (event) {
 
 function start() {
     socket.send(JSON.stringify({'move': 'ok'}));
-    document.getElementById('msg').innerHTML = 'my turn';
+    document.getElementById('msg').innerHTML = '';
 }
 
 </script>
