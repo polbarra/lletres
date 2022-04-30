@@ -6,28 +6,44 @@ let lastPressTimestamp;
 let shortClickThreshold = 500;
 let x = 0;
 let y = 0;
-let grid;
+let myGrid;
 let piece;
 
 class Grid{
     constructor(gridSize, resolution, offset) {
         this.grid = new Array(resolution * resolution);
+
+        for (let i = 0; i < resolution; i++) 
+            for (let j = 0; j < resolution; j++)
+                this.grid[i+j*resolution] = 0;
+
         this.resolution = resolution;
+        this.position = 0;
         this.offset = offset;
         this.gridSize = gridSize;
     }
     Render(){
         for (let i = 0; i < this.resolution*this.resolution; i++) {
-            let cellPositionX =  Math.floor(i / 10) * 40;
-            let cellPositionY = (i % 10) * 40;
+            let cellPositionX =  (i % 10) * 40;
+            let cellPositionY =  Math.floor((i / 10)) * 40;
             fill(255);
-            square(cellPositionX + this.offset, cellPositionY + this.offset, this.gridSize / this.resolution);
+            const cellSize = this.gridSize/this.resolution;
+            const pos = {
+                x: cellPositionX + this.offset,
+                y: cellPositionY + this.offset,
+            };
+            square(pos.x, pos.y, cellSize);
+            fill(1);
+            textAlign(CENTER, CENTER);
+            text(this.grid[i] != 0 ? this.grid[i] : "", pos.x + cellSize/2, pos.y + cellSize/2)
         }
     }
+
     GetIdx(position) {
         const cellSize = this.gridSize/this.resolution;
         return Math.floor((position.x-this.offset+cellSize/2)/cellSize) + Math.floor((position.y-this.offset+cellSize/2)/cellSize)*10;
     }
+
     CheckValidPosition(piece){
         const idx = this.GetIdx(piece.position);
 
@@ -37,20 +53,24 @@ class Grid{
         for (let i = 0; i < 16; i++) {
             let x_grid = i % 4;
             let y_grid = Math.floor(i / 4);
-            if (idx + x_grid < this.resolution) // right overlflow
-                return false
-            if (idx + this.resolution*y_grid < this.resolution*this.resolution) // bottom overlfow
-                return false
 
             // check doesn't collide
-            if (grid[idx+x_grid+y_grid*this.resolution] != '0')
+            if (this.grid[idx+x_grid+y_grid*4] != 0 && piece.shape[i] != 0)
                 return false;
         }
-        return false;
+
+        return true;
     }
 
-    placePiece(piece){
-
+    placePiece(piece) {
+        const idx = this.GetIdx(piece.position);
+        for (let i = 0; i < 16; i++) {
+            const x_grid = i % 4;
+            const y_grid = Math.floor(i / 4);
+            if (piece.shape[i] > 0) {
+                this.grid[idx+x_grid+y_grid*this.resolution] = piece.letters[piece.shape[i]-1];
+            }
+        }
     }
 }
 
@@ -93,7 +113,7 @@ class Piece{
 function setup(){
     canvas = createCanvas(500, 650);
     canvas.position(0,0,'fixed');
-    grid = new Grid(400, 10, 50);
+    myGrid = new Grid(400, 10, 50);
     let piecePosition = createVector(50, 500);
     let shape = [1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 , 0, 0];
     piece = new Piece("WASD", shape, 0, piecePosition, 30)
@@ -112,7 +132,7 @@ function draw() {
             piece.position = createVector(mouseX - piece.size/2, mouseY - piece.size/2);
         }
     }
-    grid.Render();
+    myGrid.Render();
     piece.Update();
     piece.Render();
 }
@@ -127,8 +147,9 @@ function mouseReleased() {
     lastPressTimestamp = 0;
     piece.inHand = true;
     //piece.position = createVector(50, 500);
-    const is_valid_placement = grid.CheckValidPosition(piece);
+    const is_valid_placement = myGrid.CheckValidPosition(piece);
     if (is_valid_placement) {
-        
+        myGrid.placePiece(piece);
+        //delete piece
     }
 }
