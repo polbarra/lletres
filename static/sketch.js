@@ -154,10 +154,10 @@ function mousePressed() {
 function mouseReleased() {
     lastPressTimestamp = 0;
     selectedPiece.inHand = true;
-    selectedPiece.position = createVector(100, 500);
-    // const is_valid_placement = myGrid.CheckValidPosition(selectedPiece);
-    // if (is_valid_placement) {
-    //
-    //     //myGrid.placePiece(piece);
-    // }
+    selectedPiece.position = createVector(90, 500);
+    const is_valid_placement = myGrid.CheckValidPosition(selectedPiece);
+    if (is_valid_placement) {
+
+        myGrid.placePiece(selectedPiece);
+    }
 }
