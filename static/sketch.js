@@ -30,9 +30,25 @@ class Grid{
     }
     CheckValidPosition(piece){
         const idx = this.GetIdx(piece.position);
-        console.log(idx);
+
+        if (idx < 0)
+            return false;
+
+        for (let i = 0; i < 16; i++) {
+            let x_grid = i % 4;
+            let y_grid = Math.floor(i / 4);
+            if (idx + x_grid < this.resolution) // right overlflow
+                return false
+            if (idx + this.resolution*y_grid < this.resolution*this.resolution) // bottom overlfow
+                return false
+
+            // check doesn't collide
+            if (grid[idx+x_grid+y_grid*this.resolution] != '0')
+                return false;
+        }
         return false;
     }
+
     placePiece(piece){
 
     }
@@ -111,5 +127,8 @@ function mouseReleased() {
     lastPressTimestamp = 0;
     piece.inHand = true;
     //piece.position = createVector(50, 500);
-    const valid_placement = grid.CheckValidPosition(piece);
+    const is_valid_placement = grid.CheckValidPosition(piece);
+    if (is_valid_placement) {
+        
+    }
 }
