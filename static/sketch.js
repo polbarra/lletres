@@ -24,7 +24,13 @@ class Grid{
             square(cellPositionX + this.offset, cellPositionY + this.offset, this.gridSize / this.resolution);
         }
     }
-    checkValidPosition(piece){
+    GetIdx(position) {
+        const cellSize = this.gridSize/this.resolution;
+        return Math.floor((position.x-this.offset+cellSize/2)/cellSize) + Math.floor((position.y-this.offset+cellSize/2)/cellSize)*10;
+    }
+    CheckValidPosition(piece){
+        const idx = this.GetIdx(piece.position);
+        console.log(idx);
         return false;
     }
     placePiece(piece){
@@ -104,5 +110,6 @@ function mousePressed() {
 function mouseReleased() {
     lastPressTimestamp = 0;
     piece.inHand = true;
-    piece.position = createVector(50, 500);
+    //piece.position = createVector(50, 500);
+    const valid_placement = grid.CheckValidPosition(piece);
 }
