@@ -105,8 +105,8 @@ def check_winner(game_id):
 async def end_game(game_id, winner_id):
     print(f"game {game_id}: winner {winner_id}")
     loser_id = [x for x in games[game_id]["users"] if x != winner_id][0]
-    await user_socket[winner_id].send(json.dumps({'state': 'winner!'}))
-    await user_socket[loser_id].send(json.dumps({'state': 'loser!'}))
+    await user_socket[winner_id].send(json.dumps({'msg': 'winner'}))
+    await user_socket[loser_id].send(json.dumps({'msg': 'loser'}))
     games[game_id]['winner'] = winner_id
     games[game_id]['player_event'].set()
     games[game_id]['player_event'].clear()

@@ -53,19 +53,30 @@ socket.addEventListener('message', function (event) {
     }
 
     if ('msg' in data) {
-        if (data['msg'] == 'ping') {
-            myGrid.grid = data['grid']
-            make_move = true;
-        }
-        
-        if (data['msg'] == 'wait') {
-            document.getElementById('msg').innerHTML = 'Waiting for other player';
-            document.getElementById('start').disabled = true;
-            game.is_run = true;
-            make_move = false;
+            if (data['msg'] == 'ping') {
+                myGrid.grid = data['grid']
+                make_move = true;
+            }
+            
+            if (data['msg'] == 'wait') {
+                document.getElementById('msg').innerHTML = 'Waiting for other player';
+                document.getElementById('start').disabled = true;
+                game.is_run = true;
+                make_move = false;
+            }
+
+            if (data['msg'] == 'winner') {
+                alert("win");
+                game.is_run = false;
+            }
+
+            if (data['msg'] == 'loser') {
+                alert("lose");
+                game.is_run = false;
+            }
         }
     }
-});
+);
 
 function send_data_to_player(data) {
     socket.send(JSON.stringify(data));
