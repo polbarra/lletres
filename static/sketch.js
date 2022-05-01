@@ -79,7 +79,6 @@ class Grid{
             if (this.grid[idx+x_grid+y_grid*this.resolution] != 0 && piece.shape[i] != 0)
                 return false;
         }
-
         return true;
     }
 
@@ -98,7 +97,7 @@ class Grid{
             piece_names[Math.floor(Math.random()*piece_names.length)],
             Math.floor(Math.random()*4),
             piece.orig,
-            30
+            40
         )
         for (let i = 0; i < pieces.length; i++) {
             if (pieces[i] == piece) {
@@ -192,16 +191,7 @@ function getLetters() {
 function setup(){
     canvas = createCanvas(500, 1000);
     canvas.position(0,0,'fixed');
-    myGrid = new Grid(400, 10, 50);
-    pieces = [
-        new Piece(getLetters(),
-         piece_names[Math.floor(Math.random()*piece_names.length)],
-         Math.floor(Math.random()*4), pieces_positions.left, 30),
-        new Piece(getLetters(),
-         piece_names[Math.floor(Math.random()*piece_names.length)],
-         Math.floor(Math.random()*4), pieces_positions.right, 30),
-    ]
-    
+
     InitialiseGameScene();
     gridBackground = loadImage('../images/GridBackground.png');
     emptyTile = loadImage('../images/EmptyTile.png');
@@ -244,21 +234,25 @@ function RenderMatchmakingScene(){
 function InitialiseGameScene(){
     myGrid = new Grid(400, 10, createVector(50, 150));
     pieces = [
-        new Piece("HACK", piece_shapes.square3, 0, pieces_positions.left, 40),
-        new Piece("HACK", piece_shapes.square4, 0, pieces_positions.right, 40),
+        new Piece(getLetters(),
+            piece_names[Math.floor(Math.random()*piece_names.length)],
+            Math.floor(Math.random()*4), pieces_positions.left, 40),
+        new Piece(getLetters(),
+            piece_names[Math.floor(Math.random()*piece_names.length)],
+            Math.floor(Math.random()*4), pieces_positions.right, 40),
     ]
 }
-function UpdateGameScene(){
-    if(mouseWasDragged){
+function UpdateGameScene() {
+    if (mouseWasDragged) {
         if (selectedPiece) {
-            selectedPiece.position = createVector(mouseX - selectedPiece.size/2, mouseY - selectedPiece.size/2);
+            selectedPiece.position = createVector(mouseX - selectedPiece.size / 2, mouseY - selectedPiece.size / 2);
         } else if (millis() - lastPressTimestamp < shortClickThreshold) {
             for (let i = 0; i < pieces.length; i++) {
                 if (
-                    mouseX - pieces[i].position.x < pieces[i].size*4 &&
-                    mouseY - pieces[i].position.y < pieces[i].size*4 &&
+                    mouseX - pieces[i].position.x < pieces[i].size * 4 &&
+                    mouseY - pieces[i].position.y < pieces[i].size * 4 &&
                     mouseX > pieces[i].position.x &&
-                    mouseY > pieces[i].position.y && make_move){
+                    mouseY > pieces[i].position.y && make_move) {
                     selectedPiece = pieces[i];
                     selectedPiece.inHand = true;
                 }
@@ -266,40 +260,31 @@ function UpdateGameScene(){
         }
         mouseWasDragged = false;
     }
-    if(mouseWasReleased){
+    if (mouseWasReleased) {
         if (selectedPiece) {
             const is_valid_placement = myGrid.CheckValidPosition(selectedPiece);
-
-        selectedPiece.position = selectedPiece.orig;
-        selectedPiece.inHand = false;
-        selectedPiece = null;
-    }else {
-        for (let i = 0; i < pieces.length; i++) {
-            if (
-                mouseX - pieces[i].position.x < pieces[i].size*4 &&
-                mouseY - pieces[i].position.y < pieces[i].size*4 &&
-                mouseX > pieces[i].position.x &&
-                mouseY > pieces[i].position.y){
-                pieces[i].Rotate();
+            if (is_valid_placement)
+            {
+                myGrid.placePiece(selectedPiece)
+                selectedPiece.position = selectedPiece.orig;
+                selectedPiece.inHand = false;
+                selectedPiece = null;
             }
-
-            selectedPiece.position = selectedPiece.orig;
-            selectedPiece.inHand = false;
-            selectedPiece = null;
-        }else {
+        } else {
             for (let i = 0; i < pieces.length; i++) {
                 if (
-                    mouseX - pieces[i].position.x < pieces[i].size*4 &&
-                    mouseY - pieces[i].position.y < pieces[i].size*4 &&
+                    mouseX - pieces[i].position.x < pieces[i].size * 4 &&
+                    mouseY - pieces[i].position.y < pieces[i].size * 4 &&
                     mouseX > pieces[i].position.x &&
-                    mouseY > pieces[i].position.y && make_move){
+                    mouseY > pieces[i].position.y) {
                     pieces[i].Rotate();
                 }
             }
+            mouseWasReleased = false;
         }
-        mouseWasReleased = false;
     }
 }
+
 function RenderGameScene(){
     fill(95, 87, 79);
     myGrid.Render();
