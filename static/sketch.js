@@ -12,7 +12,10 @@ let mouseWasReleased = false;
 let mouseWasDragged = false;
 
 let runGame = false;
+let title;
 let gridBackground;
+let yourTurnText;
+let opponentTurnText;
 let emptyTile;
 let hTile;
 let aTile;
@@ -175,8 +178,8 @@ const piece_shapes = {
 }
 
 const pieces_positions = {
-    left: {x: 90, y: 700},
-    right: {x: 290, y: 700},
+    left: {x: 90, y: 575},
+    right: {x: 290, y: 575},
 }
 
 function getLetters() {
@@ -193,7 +196,10 @@ function setup(){
     canvas.position(0,0,'fixed');
 
     InitialiseGameScene();
+    title = loadImage('../images/HACKconnect.png');
     gridBackground = loadImage('../images/GridBackground.png');
+    yourTurnText = loadImage('../images/YourTurn.png');
+    opponentTurnText = loadImage('../images/OpponentTURN.png');
     emptyTile = loadImage('../images/EmptyTile.png');
     hTile = loadImage('../images/HTile.png');
     aTile = loadImage('../images/ATile.png');
@@ -232,7 +238,7 @@ function RenderMatchmakingScene(){
 }
 
 function InitialiseGameScene(){
-    myGrid = new Grid(400, 10, createVector(50, 150));
+    myGrid = new Grid(400, 10, createVector(50, 100));
     pieces = [
         new Piece(getLetters(),
             piece_names[Math.floor(Math.random()*piece_names.length)],
@@ -287,10 +293,15 @@ function UpdateGameScene() {
 
 function RenderGameScene(){
     fill(95, 87, 79);
+
+    image(title, 55, 30);
     myGrid.Render();
-    fill(200);
-    square(75, 685, 150, 40);
-    square(275, 685, 150, 40);
+    if(make_move) {
+        image(yourTurnText, 50, 520);
+    }
+    else{
+        image(opponentTurnText, 50, 520);
+    }
 
     for(let i = 0; i < pieces.length; i++){
         pieces[i].Render();
