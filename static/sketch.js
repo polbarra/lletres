@@ -7,13 +7,25 @@ let pieces = [];
 let selectedPiece;
 let make_move = false;
 
+
+let mouseWasReleased = false;
+let mouseWasDragged = false;
+
+let runGame = false;
+let gridBackground;
+let emptyTile;
+let hTile;
+let aTile;
+let cTile;
+let kTile;
+
 class Grid{
     constructor(gridSize, resolution, offset) {
         this.grid = new Array(resolution * resolution);
 
         for (let i = 0; i < resolution; i++) 
             for (let j = 0; j < resolution; j++)
-                this.grid[i+j*resolution] = 0;
+                this.grid[i+j*resolution] = '0';
 
         this.resolution = resolution;
         this.position = 0;
@@ -21,25 +33,37 @@ class Grid{
         this.gridSize = gridSize;
     }
     Render(){
+        image(gridBackground, this.offset.x - 10, this.offset.y - 10);
         for (let i = 0; i < this.resolution*this.resolution; i++) {
             let cellPositionX =  (i % 10) * 40;
             let cellPositionY =  Math.floor((i / 10)) * 40;
             fill(255);
             const cellSize = this.gridSize/this.resolution;
             const pos = {
-                x: cellPositionX + this.offset,
-                y: cellPositionY + this.offset,
+                x: cellPositionX + this.offset.x,
+                y: cellPositionY + this.offset.y,
             };
-            square(pos.x, pos.y, cellSize);
-            fill(1);
-            textAlign(CENTER, CENTER);
-            text(this.grid[i] != 0 ? this.grid[i] : "", pos.x + cellSize/2, pos.y + cellSize/2)
+            if(this.grid[i] == '0'){
+                image(emptyTile, pos.x, pos.y);
+            }
+            else if(this.grid[i] === 'H'){
+                image(hTile, pos.x, pos.y);
+            }
+            else if(this.grid[i] === 'A'){
+                image(aTile, pos.x, pos.y);
+            }
+            else if(this.grid[i] === 'C'){
+                image(cTile, pos.x, pos.y);
+            }
+            else if(this.grid[i] === 'K'){
+                image(kTile, pos.x, pos.y);
+            }
         }
     }
 
     GetIdx(position) {
         const cellSize = this.gridSize/this.resolution;
-        return Math.floor((position.x-this.offset+cellSize/2)/cellSize) + Math.floor((position.y-this.offset+cellSize/2)/cellSize)*10;
+        return Math.floor((position.x-this.offset.x+cellSize/2)/cellSize) + Math.floor((position.y-this.offset.y+cellSize/2)/cellSize)*10;
     }
 
     CheckValidPosition(piece){
@@ -73,7 +97,6 @@ class Grid{
         make_move = false;
     }
 }
-
 class Piece{
     constructor(letters, shape, rotation, position, size) {
         this.position = position;
@@ -83,13 +106,6 @@ class Piece{
         this.rotation = rotation;
         this.inHand = false;
         this.orig = position;
-    }
-    Update(){
-        if (this.inHand) {
-            this.size = 40;
-        } else {
-            this.size = 30;
-        }
     }
     Render(){
         for(let i = 0; i < 4; i++){
@@ -101,11 +117,18 @@ class Piece{
                     segmentOffsetX = (j % 4) * this.size;
                 }
             }
-            fill(200);
-            square(this.position.x + segmentOffsetX, this.position.y + segmentOffsetY, this.size, 5);
-            fill(1);
-            textAlign(CENTER, CENTER);
-            text(this.letters[i], this.position.x + segmentOffsetX + this.size/2, this.position.y + segmentOffsetY + this.size/2)
+            if(this.letters[i] == 'H'){
+                image(hTile, this.position.x + segmentOffsetX, this.position.y + segmentOffsetY);
+            }
+            else if(this.letters[i] == 'A'){
+                image(aTile, this.position.x + segmentOffsetX, this.position.y + segmentOffsetY);
+            }
+            else if(this.letters[i] == 'C'){
+                image(cTile, this.position.x + segmentOffsetX, this.position.y + segmentOffsetY);
+            }
+            else if(this.letters[i] == 'K'){
+                image(kTile, this.position.x + segmentOffsetX, this.position.y + segmentOffsetY);
+            }
         }
     }
     Rotate(){
@@ -134,13 +157,6 @@ class Piece{
 
     }
 }
-class HandSlot{
-    constructor(piece, position) {
-        this.piece = piece;
-        this.position= position;
-        this.empty = false;
-    }
-}
 
 const piece_shapes = {
     bar1:      [1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -162,33 +178,28 @@ const piece_shapes = {
 }
 
 const pieces_positions = {
-    left: {x: 90, y: 500},
-    right: {x: 300, y: 500},
+    left: {x: 90, y: 700},
+    right: {x: 290, y: 700},
 }
 
 function setup(){
-    canvas = createCanvas(500, 700);
+    canvas = createCanvas(500, 1000);
     canvas.position(0,0,'fixed');
-    myGrid = new Grid(400, 10, 50);
-    pieces = [
-        new Piece("HACK", piece_shapes.square3, 0, pieces_positions.left, 30),
-        new Piece("HACK", piece_shapes.square4, 0, pieces_positions.right, 30),
-    ]
+    
+    InitialiseGameScene();
+    gridBackground = loadImage('../images/GridBackground.png');
+    emptyTile = loadImage('../images/EmptyTile.png');
+    hTile = loadImage('../images/HTile.png');
+    aTile = loadImage('../images/ATile.png');
+    cTile = loadImage('../images/CTile.png');
+    kTile = loadImage('../images/KTile.png');
 }
 
 function draw() {
-    background(150);
-    fill(0);
+    background(29, 22, 56);
 
-    myGrid.Render();
-    fill(200);
-    square(75, 485, 150, 40);
-    square(275, 485, 150, 40);
-
-    for(let i = 0; i < pieces.length; i++){
-        pieces[i].Update();
-        pieces[i].Render();
-    }
+    UpdateGameScene();
+    RenderGameScene();
 }
 
 function mousePressed() {
@@ -196,44 +207,102 @@ function mousePressed() {
 }
 
 function mouseDragged() {
-    if (selectedPiece) {
-        selectedPiece.position = createVector(mouseX - selectedPiece.size/2, mouseY - selectedPiece.size/2);
-    } else if (millis() - lastPressTimestamp < shortClickThreshold) {
-        for (let i = 0; i < pieces.length; i++) {
-            if (
-                mouseX - pieces[i].position.x < pieces[i].size*4 &&
-                mouseY - pieces[i].position.y < pieces[i].size*4 &&
-                mouseX > pieces[i].position.x &&
-                mouseY > pieces[i].position.y && make_move){
-                selectedPiece = pieces[i];
-                selectedPiece.inHand = true;
-            }
-        }
-    }
-
+    mouseWasDragged = true;
 }
 
 function mouseReleased() {
-    if (selectedPiece) {
-        const is_valid_placement = myGrid.CheckValidPosition(selectedPiece);
+    mouseWasReleased = true;
+    lastPressTimestamp = 0;
+}
 
-        if (is_valid_placement) {
-            myGrid.placePiece(selectedPiece);
-        }
+function InitialiseMatchmakingScene(){
 
-        selectedPiece.position = selectedPiece.orig;
-        selectedPiece.inHand = false;
-        selectedPiece = null;
-    }else {
-        for (let i = 0; i < pieces.length; i++) {
-            if (
-                mouseX - pieces[i].position.x < pieces[i].size*4 &&
-                mouseY - pieces[i].position.y < pieces[i].size*4 &&
-                mouseX > pieces[i].position.x &&
-                mouseY > pieces[i].position.y && make_move){
-                pieces[i].Rotate();
+}
+function UpdateMatchmakingScene(){
+
+}
+function RenderMatchmakingScene(){
+
+}
+
+function InitialiseGameScene(){
+    myGrid = new Grid(400, 10, createVector(50, 150));
+    pieces = [
+        new Piece("HACK", piece_shapes.square3, 0, pieces_positions.left, 40),
+        new Piece("HACK", piece_shapes.square4, 0, pieces_positions.right, 40),
+    ]
+}
+function UpdateGameScene(){
+    if(mouseWasDragged){
+        if (selectedPiece) {
+            selectedPiece.position = createVector(mouseX - selectedPiece.size/2, mouseY - selectedPiece.size/2);
+        } else if (millis() - lastPressTimestamp < shortClickThreshold) {
+            for (let i = 0; i < pieces.length; i++) {
+                if (
+                    mouseX - pieces[i].position.x < pieces[i].size*4 &&
+                    mouseY - pieces[i].position.y < pieces[i].size*4 &&
+                    mouseX > pieces[i].position.x &&
+                    mouseY > pieces[i].position.y && make_move){
+                    selectedPiece = pieces[i];
+                    selectedPiece.inHand = true;
+                }
             }
         }
+        mouseWasDragged = false;
     }
-    lastPressTimestamp = 0;
+    if(mouseWasReleased){
+        if (selectedPiece) {
+            const is_valid_placement = myGrid.CheckValidPosition(selectedPiece);
+
+            if (is_valid_placement) {
+                myGrid.placePiece(selectedPiece);
+            }
+
+            selectedPiece.position = selectedPiece.orig;
+            selectedPiece.inHand = false;
+            selectedPiece = null;
+        }else {
+            for (let i = 0; i < pieces.length; i++) {
+                if (
+                    mouseX - pieces[i].position.x < pieces[i].size*4 &&
+                    mouseY - pieces[i].position.y < pieces[i].size*4 &&
+                    mouseX > pieces[i].position.x &&
+                    mouseY > pieces[i].position.y && make_move){
+                    pieces[i].Rotate();
+                }
+            }
+        }
+        mouseWasReleased = false;
+    }
+}
+function RenderGameScene(){
+    fill(95, 87, 79);
+    myGrid.Render();
+    fill(200);
+    square(75, 685, 150, 40);
+    square(275, 685, 150, 40);
+
+    for(let i = 0; i < pieces.length; i++){
+        pieces[i].Render();
+    }
+}
+
+function InitialiseWinnerScene(){
+
+}
+function UpdateWinnerScene(){
+
+}
+function RenderWinnerScene(){
+
+}
+
+function InitialiseLoosingScene(){
+
+}
+function UpdateLoosingScene(){
+
+}
+function RenderLoosingScene(){
+
 }
