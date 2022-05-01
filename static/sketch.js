@@ -276,6 +276,11 @@ function UpdateGameScene() {
                 selectedPiece.inHand = false;
                 selectedPiece = null;
             }
+            else{
+                selectedPiece.position = selectedPiece.orig;
+                selectedPiece.inHand = false;
+                selectedPiece = null;
+            }
         } else {
             for (let i = 0; i < pieces.length; i++) {
                 if (
