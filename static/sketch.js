@@ -71,15 +71,19 @@ class Grid{
 
     CheckValidPosition(piece){
         const idx = this.GetIdx(piece.position);
-
         if (idx < 0)
             return false;
 
         for (let i = 0; i < 16; i++) {
             let x_grid = i % 4;
             let y_grid = Math.floor(i / 4);
+            if (piece.shape[i] == 0)
+                continue
 
-            if (this.grid[idx+x_grid+y_grid*this.resolution] != 0 && piece.shape[i] != 0)
+            if (idx % this.resolution + x_grid >= this.resolution)
+                return false
+
+            if (this.grid[idx+x_grid+y_grid*this.resolution] != 0)
                 return false;
         }
         return true;
