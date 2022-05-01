@@ -93,19 +93,36 @@ class Grid{
             }
         }
 
+        let new_piece = new Piece(
+            getLetters(),
+            piece_names[Math.floor(Math.random()*piece_names.length)],
+            Math.floor(Math.random()*4),
+            piece.orig,
+            30
+        )
+        for (let i = 0; i < pieces.length; i++) {
+            if (pieces[i] == piece) {
+                pieces.splice(i,1)
+                break
+            }
+        }
+        pieces.push(new_piece)
+        console.log(pieces)
+
         send_data_to_player({"grid": this.grid});
         make_move = false;
     }
 }
 class Piece{
-    constructor(letters, shape, rotation, position, size) {
+    constructor(letters, piece_name, rotation, position, size) {
         this.position = position;
         this.size = size;
         this.letters = letters;
-        this.shape = shape;
+        this.shape = piece_shapes[`${piece_name}${rotation+1}`];
         this.rotation = rotation;
         this.inHand = false;
         this.orig = position;
+        this.piece_name = piece_name;
     }
     Render(){
         for(let i = 0; i < 4; i++){
@@ -132,32 +149,13 @@ class Piece{
         }
     }
     Rotate(){
-        let transposed = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
-        for (let i = 0; i < 4; i++) {
-            for (let j = i; j < 4; j++) {
-                transposed[i][j] = this.shape[i*4 + j];
-            }
-        }
-        var n = 4 ;
-        for (var i=0; i<n/2; i++) {
-            for (var j=i; j<n-i-1; j++) {
-                var tmp=transposed[i][j];
-                transposed[i][j]=transposed[n-j-1][i];
-                transposed[n-j-1][i]=transposed[n-i-1][n-j-1];
-                transposed[n-i-1][n-j-1]=transposed[j][n-i-1];
-                transposed[j][n-i-1]=tmp;
-            }
-        }
-
-        for (let i = 0; i < 4; i++) {
-            for (let j = i; j < 4; j++) {
-                this.shape[i*4 + j] = transposed[i][j];
-            }
-        }
-
+        this.rotation = (this.rotation+1) % 4;
+        this.shape = piece_shapes[`${this.piece_name}${this.rotation+1}`]
     }
 }
 
+
+const piece_names = ["bar", "l", "square", "s"]
 const piece_shapes = {
     bar1:      [1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     bar2:      [1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0, 4, 0, 0, 0],
@@ -182,9 +180,27 @@ const pieces_positions = {
     right: {x: 290, y: 700},
 }
 
+function getLetters() {
+    const letters = "HACK".split("")
+    let res = [];
+    for (let i = 0; i < 4; i++) {
+        res.push(letters[Math.floor(Math.random()*4)]);
+    }
+    return res;
+}
+
 function setup(){
     canvas = createCanvas(500, 1000);
     canvas.position(0,0,'fixed');
+    myGrid = new Grid(400, 10, 50);
+    pieces = [
+        new Piece(getLetters(),
+         piece_names[Math.floor(Math.random()*piece_names.length)],
+         Math.floor(Math.random()*4), pieces_positions.left, 30),
+        new Piece(getLetters(),
+         piece_names[Math.floor(Math.random()*piece_names.length)],
+         Math.floor(Math.random()*4), pieces_positions.right, 30),
+    ]
     
     InitialiseGameScene();
     gridBackground = loadImage('../images/GridBackground.png');
@@ -254,8 +270,17 @@ function UpdateGameScene(){
         if (selectedPiece) {
             const is_valid_placement = myGrid.CheckValidPosition(selectedPiece);
 
-            if (is_valid_placement) {
-                myGrid.placePiece(selectedPiece);
+        selectedPiece.position = selectedPiece.orig;
+        selectedPiece.inHand = false;
+        selectedPiece = null;
+    }else {
+        for (let i = 0; i < pieces.length; i++) {
+            if (
+                mouseX - pieces[i].position.x < pieces[i].size*4 &&
+                mouseY - pieces[i].position.y < pieces[i].size*4 &&
+                mouseX > pieces[i].position.x &&
+                mouseY > pieces[i].position.y){
+                pieces[i].Rotate();
             }
 
             selectedPiece.position = selectedPiece.orig;

@@ -15,36 +15,12 @@ from datetime import datetime
 config = {
     "width": 0,
     "height": 0,
+    'word': 'HACK',
 }
 
 users = {}
 user_socket = {}
 user_event = asyncio.Event()
-
-"""
-pieces = {
-    "L": {
-        "1": [[1,0],
-              [2,0],
-              [3,4]]
-    }
-}
-
-games = {
-    "1": {
-        "users": [2,3],
-        "grid": [[None]*SHAPE[0]]*SHAPE[1],
-        "active_player": 2,
-        "last_movement": datetime.now(),
-        "selected_piece": "L",
-        "winner": None,
-        "hand": {
-            "1": [("L", "ABCD")]*4,
-            "2": [("L", "ABCD")]*4,
-        },
-    }
-}
-"""
 
 games = {}
 
@@ -88,16 +64,14 @@ def check_winner(game_id):
     # check rows
     for i in range(H):
         row = ''.join(grid[i*W:i*W+W])
-        print(row)
-        if 'AAA' in row:
+        if config["word"] in row:
             return True
 
     # check columns
     cols = [[grid[W*x+c] for x in range(H)] for c in range(W)]
     for col in cols:
         col = ''.join(col)
-        print(col)
-        if 'AAA' in col:
+        if config["word"] in col:
             return True
             
     # check diagonals
@@ -105,13 +79,11 @@ def check_winner(game_id):
     diags2 = [[(x,y) for x in range(W) for y in range(W) if x + y == W-c] for c in range(-(W-2), W+1)]
     for diag in diags:
         diag = ''.join([grid[x[0]*W+x[1]] for x in diag])
-        print(diag)
-        if 'AAA' in diag:
+        if config["word"] in diag:
             return True
     for diag in diags2:
         diag = ''.join([grid[x[0]*W+x[1]] for x in diag])
-        print(diag)
-        if 'AAA' in diag:
+        if config["word"] in diag:
             return True
     
     return False
@@ -187,7 +159,7 @@ async def wait_game(websocket):
                 await notify_available_users(uid)
                 await wait_players()
                 await notify_available_users(uid)
-                await websocket.send("Click to play!")
+                await websocket.send(json.dumps({"msg": "ok"}))
                 res = await websocket.recv()
                 accepted = True
 
@@ -233,9 +205,11 @@ async def server(ip, gameport, httpport):
 @click.option('--ip', default='0.0.0.0', help='Server IP')
 @click.option('--gameport', default=8765, help='Game websocket port')
 @click.option('--webport', default=8000, help='Game http port')
-def main(width, height, ip, gameport, webport):
+@click.option('--word', default="HACK", help='Win word')
+def main(width, height, ip, gameport, webport, word):
     config["width"] = width
     config["height"] = height
+    config["word"] = word
     asyncio.run(server(ip, gameport, webport))
 
 if __name__ == "__main__":
